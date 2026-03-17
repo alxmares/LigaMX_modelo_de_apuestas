@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liga MX · Betting Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #080808;
+  --bg1: #0f0f0f;
+  --bg2: #161616;
+  --bg3: #1e1e1e;
+  --border: rgba(255,255,255,0.10);
+  --border2: rgba(255,255,255,0.18);
+  --text: #F5F2EB;
+  --text2: #b8b4ae;
+  --text3: #7a7672;
+  --accent: #B8FF57;
+  --red: #FF4D4D;
+  --amber: #F5A623;
+  --blue: #4D9FFF;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 52px;
+  background: rgba(8,8,8,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 32px;
+  gap: 0;
+}
+.nav-logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .15em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-right: 40px;
+  white-space: nowrap;
+}
+.nav-links {
+  display: flex; gap: 0; flex: 1;
+  overflow-x: auto;
+}
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text2);
+  text-decoration: none;
+  padding: 0 16px;
+  height: 52px;
+  display: flex; align-items: center;
+  border-right: 1px solid var(--border);
+  transition: color .2s;
+  white-space: nowrap;
+}
+.nav-links a:first-child { border-left: 1px solid var(--border); }
+.nav-links a:hover, .nav-links a.active { color: var(--text); }
+.nav-links a.active { color: var(--accent); }
+
+.lang-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all .2s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── SECTIONS ── */
+section {
+  min-height: 100vh;
+  padding: 120px 0 100px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+section:last-of-type { border-bottom: none; }
+
+.container { max-width: 1280px; margin: 0 auto; padding: 0 48px; }
+
+/* ── SECTION HEADER ── */
+.s-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 10px;
+}
+.s-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 20px; height: 1px;
+  background: var(--accent);
+}
+.s-title {
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  margin-bottom: 14px;
+}
+.s-title em { font-style: italic; color: var(--text2); }
+.s-title { margin-bottom: 14px; }
+.s-sub {
+  font-size: 16px;
+  color: var(--text2);
+  font-weight: 300;
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.card-sm { padding: 22px 24px; }
+.card-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 10px;
+}
+.card-value {
+  font-family: var(--mono);
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1;
+}
+.card-value-sm { font-size: 22px; }
+.card-value.accent { color: var(--accent); }
+.card-value.red { color: var(--red); }
+.card-value.amber { color: var(--amber); }
+.card-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 8px;
+  font-family: var(--mono);
+}
+.card-insight {
+  font-size: 14px;
+  color: var(--text2);
+  margin-top: 14px;
+  line-height: 1.65;
+  border-top: 1px solid var(--border2);
+  padding-top: 14px;
+}
+
+/* ── CHART CONTAINERS ── */
+.chart-box {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  padding: 28px 30px;
+}
+.chart-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 20px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.chart-wrap { position: relative; width: 100%; }
+
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+/* ── TAGS ── */
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid;
+}
+.tag-green { border-color: var(--accent); color: var(--accent); }
+.tag-red { border-color: var(--red); color: var(--red); }
+.tag-amber { border-color: var(--amber); color: var(--amber); }
+.tag-dim { border-color: var(--text3); color: var(--text3); }
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border2);
+}
+.data-table td {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text2);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table td:first-child { color: var(--text); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.num { text-align: right; }
+
+/* ── SPARKBAR ── */
+.sparkbar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.sparkbar-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  width: 150px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sparkbar-track {
+  flex: 1; height: 4px;
+  background: var(--bg3);
+  position: relative;
+  overflow: hidden;
+}
+.sparkbar-fill {
+  position: absolute; left: 0; top: 0; height: 100%;
+  transition: width .8s cubic-bezier(.4,0,.2,1);
+}
+.sparkbar-val {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  width: 52px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── FEATURE TABLE ── */
+.feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; }
+.feat-item {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  padding: 24px 22px;
+}
+.feat-name {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.feat-desc {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+.feat-coef {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+}
+
+/* ── PIPELINE STEPS ── */
+.pipeline {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.pipe-step {
+  flex: 1;
+  padding: 24px 22px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.pipe-step:last-child { border-right: none; }
+.pipe-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+.pipe-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.pipe-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* ── INTRO SECTION ── */
+#intro {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0;
+}
+.intro-ticker {
+  position: absolute; top: 60px; left: 0; right: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: var(--text2);
+  padding: 10px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 32px;
+  overflow: hidden;
+}
+.ticker-item span { color: var(--accent); margin-left: 6px; }
+.intro-hero { padding: 80px 32px 60px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.intro-headline {
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 300;
+  line-height: 1.0;
+  letter-spacing: -.04em;
+  margin-bottom: 32px;
+}
+.intro-headline .line2 { color: var(--text2); }
+.intro-headline .accent { color: var(--accent); font-style: italic; }
+.intro-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  border: 1px solid var(--border);
+  margin-top: 40px;
+}
+.intro-kpi {
+  padding: 28px 24px;
+  border-right: 1px solid var(--border);
+}
+.intro-kpi:last-child { border-right: none; }
+.intro-kpi-val {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.intro-kpi-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+/* ── VALIDATION ROW ── */
+.val-row {
+  display: flex; align-items: center; gap: 0;
+  border: 1px solid var(--border);
+  margin-top: 1px;
+  overflow: hidden;
+}
+.val-cell {
+  flex: 1; padding: 20px 22px;
+  border-right: 1px solid var(--border);
+}
+.val-cell:last-child { border-right: none; }
+.val-metric { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+.val-value { font-family: var(--mono); font-size: 24px; font-weight: 300; }
+.val-target { font-family: var(--mono); font-size: 11px; color: var(--text2); margin-top: 2px; }
+.val-pass { color: var(--accent); }
+.val-fail { color: var(--red); }
+
+/* ── FILTERS BLOCK ── */
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(6,1fr);
+  gap: 1px;
+  border: 1px solid var(--border);
+}
+.filter-cell {
+  padding: 20px 18px;
+  border-right: 1px solid var(--border);
+  background: var(--bg1);
+}
+.filter-cell:last-child { border-right: none; }
+.filter-k { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
+.filter-v { font-family: var(--mono); font-size: 17px; font-weight: 400; color: var(--accent); }
+.filter-why { font-size: 13px; color: var(--text2); margin-top: 4px; line-height: 1.4; }
+
+/* ── INSIGHT BOX ── */
+.insight {
+  background: rgba(184,255,87,0.04);
+  border: 1px solid rgba(184,255,87,0.15);
+  padding: 18px 22px;
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+.insight strong { color: var(--accent); font-weight: 500; }
+
+/* ── CI BAR ── */
+.ci-visual {
+  height: 8px;
+  background: var(--bg3);
+  border-radius: 3px;
+  position: relative;
+  margin: 10px 0 4px;
+}
+.ci-range { position: absolute; height: 100%; background: rgba(245,166,35,0.35); border-radius: 3px; }
+.ci-zero  { position: absolute; width: 2px; height: 16px; top: -5px; background: var(--red); border-radius: 1px; }
+.ci-point { position: absolute; width: 3px; height: 18px; top: -6px; background: var(--accent); border-radius: 2px; }
+
+/* ── SCROLL ANIMATION ── */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.fade-in.visible { opacity: 1; transform: none; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .grid-4, .grid-5, .intro-kpis, .filter-row { grid-template-columns: repeat(2,1fr); }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .pipeline { flex-direction: column; }
+  .nav-links { display: none; }
+}
+@media (max-width: 600px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .feat-grid { grid-template-columns: 1fr; }
+  .intro-headline { font-size: 36px; }
+}
+
+/* ── LANG: class-based ── */
+/* Table lang cells */
+th.lang-en, td.lang-en { display: none; }
+th.lang-es, td.lang-es { display: table-cell; }
+body.en th.lang-es, body.en td.lang-es { display: none !important; }
+body.en th.lang-en, body.en td.lang-en { display: table-cell !important; }
+.lang-es { display: inline; }
+.lang-en { display: none; }
+body.en .lang-es { display: none !important; }
+body.en .lang-en { display: inline !important; }
+/* Block-level overrides */
+div.lang-es, p.lang-es, h2.lang-es, div.s-eyebrow.lang-es,
+div.card-label.lang-es, div.card-sub.lang-es, div.card-insight.lang-es,
+div.chart-title.lang-es, div.feat-desc.lang-es, div.feat-coef.lang-es,
+div.pipe-desc.lang-es, div.pipe-name.lang-es, div.pipe-num.lang-es,
+div.s-sub.lang-es, p.s-sub.lang-es, div.filter-why.lang-es,
+div.insight.lang-es, div.val-target.lang-es, div.val-metric.lang-es,
+div.intro-kpi-label.lang-es, div.filter-k.lang-es { display: block; }
+div.lang-en, p.lang-en, h2.lang-en, div.s-eyebrow.lang-en,
+div.card-label.lang-en, div.card-sub.lang-en, div.card-insight.lang-en,
+div.chart-title.lang-en, div.feat-desc.lang-en, div.feat-coef.lang-en,
+div.pipe-desc.lang-en, div.pipe-name.lang-en, div.pipe-num.lang-en,
+div.s-sub.lang-en, p.s-sub.lang-en, div.filter-why.lang-en,
+div.insight.lang-en, div.val-target.lang-en, div.val-metric.lang-en,
+div.intro-kpi-label.lang-en, div.filter-k.lang-en { display: none; }
+body.en div.lang-es, body.en p.lang-es, body.en h2.lang-es { display: none !important; }
+body.en div.lang-en, body.en p.lang-en, body.en h2.lang-en { display: block !important; }
+</style>
+</head>
+<body>
+
+<!-- ── NAVIGATION ── -->
+<nav>
+  <div class="nav-logo">Liga MX<span style="color:var(--text3)"> / Analytics</span></div>
+  <div class="nav-links">
+    <a href="#intro" class="active" data-section="intro">
+      <span class="lang-es">Inicio</span><span class="lang-en">Home</span>
+    </a>
+    <a href="#overview" data-section="overview">
+      <span class="lang-es">Análisis General</span><span class="lang-en">Overview</span>
+    </a>
+    <a href="#features" data-section="features">
+      <span class="lang-es">Características</span><span class="lang-en">Features</span>
+    </a>
+    <a href="#market" data-section="market">
+      <span class="lang-es">Mercado</span><span class="lang-en">Market</span>
+    </a>
+    <a href="#model" data-section="model">
+      <span class="lang-es">Modelo</span><span class="lang-en">Model</span>
+    </a>
+  </div>
+  <button class="lang-btn" onclick="toggleLang()">EN / ES</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     §0 · INTRO
+═══════════════════════════════════════════════ -->
+<section id="intro">
+  <div class="intro-ticker">
+    <span>LIGA MX</span>
+    <span>4,567 <span class="lang-es">partidos</span><span class="lang-en">matches</span></span>
+    <span>2012 — 2026</span>
+    <span>25 <span class="lang-es">equipos</span><span class="lang-en">teams</span></span>
+    <span>12,151 <span class="lang-es">goles</span><span class="lang-en">goals</span></span>
+    <span>ROI <span style="color:var(--accent)">+11.84%</span></span>
+    <span>AUC <span style="color:var(--accent)">0.680</span></span>
+  </div>
+
+  <div class="intro-hero">
+    <div class="intro-headline">
+      <div class="lang-es">
+        <div>Liga MX</div>
+        <div class="line2"><em class="accent">Apuestas</em> con</div>
+        <div class="line2">ciencia de datos.</div>
+      </div>
+      <div class="lang-en">
+        <div>Liga MX</div>
+        <div class="line2"><em class="accent">Betting</em> with</div>
+        <div class="line2">data science.</div>
+      </div>
+    </div>
+
+    <div class="lang-es" style="max-width:560px; color:var(--text2); font-size:17px; font-weight:300; line-height:1.8;">
+      Pipeline estadístico completo: desde la ingeniería de características y recalibración de ELO hasta un modelo de regresión logística calibrado con doble capa Platt, optimizado para generar señales de apuesta con ventaja real y verificable sobre el mercado.
+    </div>
+    <div class="lang-en" style="max-width:560px; color:var(--text2); font-size:17px; font-weight:300; line-height:1.8;">
+      End-to-end statistical pipeline: from feature engineering and ELO recalibration to a dual-layer Platt-calibrated logistic regression model, optimised to generate betting signals with real, verifiable edge over the market.
+    </div>
+
+    <div class="intro-kpis">
+      <div class="intro-kpi">
+        <div class="intro-kpi-val" style="color:var(--accent)">+11.84%</div>
+        <div class="intro-kpi-label lang-es">ROI Flat</div>
+        <div class="intro-kpi-label lang-en">Flat ROI</div>
+      </div>
+      <div class="intro-kpi">
+        <div class="intro-kpi-val">62.0%</div>
+        <div class="intro-kpi-label lang-es">Win Rate</div>
+        <div class="intro-kpi-label lang-en">Win Rate</div>
+      </div>
+      <div class="intro-kpi">
+        <div class="intro-kpi-val">0.680</div>
+        <div class="intro-kpi-label">AUC</div>
+      </div>
+      <div class="intro-kpi">
+        <div class="intro-kpi-val" style="color:var(--accent)">3.1%</div>
+        <div class="intro-kpi-label lang-es">Error Calibración</div>
+        <div class="intro-kpi-label lang-en">Calibration Error</div>
+      </div>
+      <div class="intro-kpi">
+        <div class="intro-kpi-val">50</div>
+        <div class="intro-kpi-label lang-es">Apuestas filtradas</div>
+        <div class="intro-kpi-label lang-en">Filtered bets</div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;">
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="pipe-num">01 — <span class="lang-es">DATOS</span><span class="lang-en">DATA</span></div>
+          <div class="pipe-name lang-es">Recopilación</div>
+          <div class="pipe-name lang-en">Collection</div>
+          <div class="pipe-desc lang-es">4,567 partidos · 14 temporadas · cuotas Pinnacle/B365</div>
+          <div class="pipe-desc lang-en">4,567 matches · 14 seasons · Pinnacle/B365 odds</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">02 — ELO</div>
+          <div class="pipe-name lang-es">Recalibración</div>
+          <div class="pipe-name lang-en">Recalibration</div>
+          <div class="pipe-desc">K=12 · ha=−25 · gd=0.3 · std: 37→102</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">03 — <span class="lang-es">FEATURES</span><span class="lang-en">FEATURES</span></div>
+          <div class="pipe-name lang-es">Ingeniería</div>
+          <div class="pipe-name lang-en">Engineering</div>
+          <div class="pipe-desc">18 <span class="lang-es">variables</span><span class="lang-en">variables</span> · <span class="lang-es">diferenciales + ELO + forma</span><span class="lang-en">differentials + ELO + form</span></div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">04 — <span class="lang-es">MODELO</span><span class="lang-en">MODEL</span></div>
+          <div class="pipe-name">LR + Isotonic + Platt</div>
+          <div class="pipe-desc lang-es">AUC 0.680 · ECE 3.1% · Brier 0.226</div>
+          <div class="pipe-desc lang-en">AUC 0.680 · ECE 3.1% · Brier 0.226</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-num">05 — <span class="lang-es">APUESTAS</span><span class="lang-en">BETTING</span></div>
+          <div class="pipe-name lang-es">Producción</div>
+          <div class="pipe-name lang-en">Production</div>
+          <div class="pipe-desc lang-es">ELO Q4 · div>2% · Kelly/4</div>
+          <div class="pipe-desc lang-en">ELO Q4 · div>2% · Kelly/4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     §1 · ANÁLISIS GENERAL
+═══════════════════════════════════════════════ -->
+<section id="overview">
+<div class="container">
+  <div class="s-eyebrow lang-es">01 — Análisis General</div>
+  <div class="s-eyebrow lang-en">01 — Overview</div>
+  <h2 class="s-title lang-es">14 años de fútbol<br><em>mexicano, en números.</em></h2>
+  <h2 class="s-title lang-en">14 years of Mexican<br><em>football, in numbers.</em></h2>
+  <p class="s-sub lang-es">Un análisis descriptivo completo de 4,567 partidos de Liga MX, comparados con los principales estándares europeos. La base empírica de todo el modelo.</p>
+  <p class="s-sub lang-en">A full descriptive analysis of 4,567 Liga MX matches, benchmarked against major European standards. The empirical foundation of the entire model.</p>
+
+  <hr class="divider">
+
+  <!-- KPIs Row 1 -->
+  <div class="grid-4 fade-in" style="gap:1px; margin-bottom:1px;">
+    <div class="card card-sm">
+      <div class="card-label lang-es">Partidos Totales</div>
+      <div class="card-label lang-en">Total Matches</div>
+      <div class="card-value">4,567</div>
+      <div class="card-sub lang-es">2012/13 — 2025/26</div>
+      <div class="card-sub lang-en">2012/13 — 2025/26</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-label lang-es">Goles Totales</div>
+      <div class="card-label lang-en">Total Goals</div>
+      <div class="card-value accent">12,151</div>
+      <div class="card-sub lang-es">Promedio 2.661 / partido</div>
+      <div class="card-sub lang-en">Average 2.661 / match</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-label lang-es">Equipos únicos</div>
+      <div class="card-label lang-en">Unique teams</div>
+      <div class="card-value">25</div>
+      <div class="card-sub lang-es">Rotación por descenso / ascenso</div>
+      <div class="card-sub lang-en">Rotation via relegation / promotion</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-label lang-es">Máx. goles partido</div>
+      <div class="card-label lang-en">Max goals in match</div>
+      <div class="card-value amber">11</div>
+      <div class="card-sub lang-es">Registro histórico</div>
+      <div class="card-sub lang-en">All-time record</div>
+    </div>
+  </div>
+
+  <!-- Results row -->
+  <div class="grid-3 fade-in" style="gap:1px; margin-bottom:28px;">
+    <div class="card card-sm">
+      <div class="card-label lang-es">Victoria Local</div>
+      <div class="card-label lang-en">Home Win</div>
+      <div class="card-value" style="color:var(--accent)">44.7%</div>
+      <div class="card-sub lang-es">2,040 de 4,567 partidos</div>
+      <div class="card-sub lang-en">2,040 of 4,567 matches</div>
+      <div class="card-insight lang-es">La localía en Liga MX es <strong>menor que Europa</strong> (45–50%). El formato de torneos cortos comprime la ventaja de cancha propia, motivo por el que home_adv se fijó en <strong>−25</strong> en el ELO.</div>
+      <div class="card-insight lang-en">Home advantage in Liga MX is <strong>lower than Europe</strong> (45–50%). Short tournament format compresses home field advantage — reason home_adv was set to <strong>−25</strong> in ELO.</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-label">Empate / Draw</div>
+      <div class="card-value" style="color:var(--text2)">27.1%</div>
+      <div class="card-sub">1,238 partidos / matches</div>
+      <div class="card-insight lang-es">Tasa de empate comparable con las grandes ligas europeas. El mercado de apuestas cotiza el empate a <strong>3.50x</strong> de promedio, implicando 28.6% — sobreestimación de ~1.5pp.</div>
+      <div class="card-insight lang-en">Draw rate comparable to major European leagues. Bookmakers price draws at <strong>3.50x</strong> average, implying 28.6% — a ~1.5pp overestimation.</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-label lang-es">Victoria Visitante</div>
+      <div class="card-label lang-en">Away Win</div>
+      <div class="card-value" style="color:var(--red)">28.2%</div>
+      <div class="card-sub">1,289 partidos / matches</div>
+      <div class="card-insight lang-es">Los libros implican 31.0% para victorias visitantes — sobreestiman en <strong>2.8pp</strong>. Las casas protegen márgenes siendo conservadoras con el visitante.</div>
+      <div class="card-insight lang-en">Books imply 31.0% for away wins — overestimating by <strong>2.8pp</strong>. Bookmakers protect margins by being conservative on away teams.</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="grid-2 fade-in" style="gap:1px; margin-bottom:1px;">
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Goles por partido · por temporada</span>
+        <span class="lang-en">Goals per match · by season</span>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="goalsChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Distribución de resultados · goles totales</span>
+        <span class="lang-en">Match result distribution · total goals</span>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="goalsDistChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2 fade-in" style="gap:1px; margin-bottom:28px;">
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Win rate local · evolución temporal</span>
+        <span class="lang-en">Home win rate · temporal trend</span>
+      </div>
+      <div class="chart-wrap" style="height:250px"><canvas id="hwrChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Liga MX vs grandes ligas · goles/partido</span>
+        <span class="lang-en">Liga MX vs major leagues · goals/match</span>
+      </div>
+      <div class="chart-wrap" style="height:250px"><canvas id="leaguesChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- BOOKMAKER BIAS -->
+  <div class="insight fade-in" style="margin-bottom:28px;">
+    <strong class="lang-es">Sesgo de mercado detectado.</strong>
+    <strong class="lang-en">Market bias detected.</strong>
+    <span class="lang-es"> Las casas de apuesta sobrevaloran sistemáticamente la victoria local (+2.7pp de margen extra), subestiman las victorias visitantes (−2.8pp) y los empates (−1.9pp). Este sesgo estructural es una de las razones por las que el modelo puede encontrar valor apostando <em>en contra del consenso del mercado</em> — específicamente cuando nuestro modelo predice una probabilidad local mayor que la implícita en la cuota.</span>
+    <span class="lang-en"> Bookmakers systematically overvalue home wins (+2.7pp extra margin), underestimate away wins (−2.8pp) and draws (−1.9pp). This structural bias is one key reason the model can find value betting <em>against market consensus</em> — specifically when our model predicts a higher home probability than the implied odds.</span>
+  </div>
+
+  <!-- TOP TEAMS TABLE -->
+  <div class="grid-2 fade-in" style="gap:1px;">
+    <div class="chart-box">
+      <div class="chart-title lang-es">Victorias históricas · top 10 equipos</div>
+      <div class="chart-title lang-en">Historical wins · top 10 teams</div>
+      <div id="teamBars"></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title lang-es">Distribución goles local · frecuencia relativa</div>
+      <div class="chart-title lang-en">Home goals distribution · relative frequency</div>
+      <div class="chart-wrap" style="height:230px"><canvas id="homeGoalsDist"></canvas></div>
+      <div class="card-insight lang-es" style="margin-top:12px; border:none; padding:0;">El 56.8% de los partidos terminan con 1 o 2 goles del local. Solo el 2% anota 5+. Distribución coherente con una Poisson de λ≈1.51.</div>
+      <div class="card-insight lang-en" style="margin-top:12px; border:none; padding:0;">56.8% of matches end with 1 or 2 home goals. Only 2% score 5+. Distribution consistent with Poisson λ≈1.51.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     §2 · INGENIERÍA DE CARACTERÍSTICAS
+═══════════════════════════════════════════════ -->
+<section id="features">
+<div class="container">
+  <div class="s-eyebrow lang-es">02 — Ingeniería de Características</div>
+  <div class="s-eyebrow lang-en">02 — Feature Engineering</div>
+  <h2 class="s-title lang-es">18 variables que<br><em>explican la victoria.</em></h2>
+  <h2 class="s-title lang-en">18 variables that<br><em>explain the win.</em></h2>
+  <p class="s-sub lang-es">Cada variable fue diseñada con hipótesis específica. No son transformaciones mecánicas: cada una responde a una pregunta futbolística concreta sobre forma, calidad y ventaja relativa.</p>
+  <p class="s-sub lang-en">Every variable was designed with a specific hypothesis. These are not mechanical transformations — each answers a concrete football question about form, quality, and relative advantage.</p>
+
+  <hr class="divider">
+
+  <!-- ELO block -->
+  <div class="chart-box fade-in" style="margin-bottom:1px;">
+    <div class="chart-title">
+      <span class="lang-es">Bloque ELO recalibrado · impacto del rediseño</span>
+      <span class="lang-en">Recalibrated ELO block · redesign impact</span>
+    </div>
+    <div class="grid-3" style="gap:1px;">
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label">ELO std · <span class="lang-es">antes</span><span class="lang-en">before</span></div>
+        <div class="card-value red">37.4</div>
+        <div class="card-sub lang-es">ELO inútil como feature</div>
+        <div class="card-sub lang-en">ELO useless as feature</div>
+      </div>
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label">ELO std · <span class="lang-es">después</span><span class="lang-en">after</span></div>
+        <div class="card-value accent">101.8</div>
+        <div class="card-sub lang-es">+172% de dispersión</div>
+        <div class="card-sub lang-en">+172% spread</div>
+      </div>
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label lang-es">Parámetros óptimos</div>
+        <div class="card-label lang-en">Optimal parameters</div>
+        <div class="card-value-sm" style="font-family:var(--mono); font-size:14px; color:var(--accent); margin-top:6px;">K=12 · ha=−25 · gd=0.3</div>
+        <div class="card-sub lang-es">Grid search sobre log-loss</div>
+        <div class="card-sub lang-en">Grid searched on log-loss</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ELO ranking -->
+  <div class="chart-box fade-in" style="margin-bottom:28px;">
+    <div class="chart-title">
+      <span class="lang-es">Ranking ELO recalibrado · estado actual 2026</span>
+      <span class="lang-en">Recalibrated ELO ranking · current state 2026</span>
+    </div>
+    <div id="eloRanking"></div>
+  </div>
+
+  <!-- Feature cards -->
+  <div style="margin-bottom:10px;">
+    <div class="s-eyebrow lang-es" style="margin-bottom:10px;">Los 3 grupos de variables</div>
+    <div class="s-eyebrow lang-en" style="margin-bottom:10px;">The 3 variable groups</div>
+  </div>
+
+  <div class="feat-grid fade-in" style="gap:1px; margin-bottom:1px;">
+    <div class="feat-item">
+      <div class="feat-name">elo_diff</div>
+      <div class="feat-desc lang-es">Diferencia entre ELO local y visitante. La variable de "calidad relativa" más pura del modelo. Un elo_diff > 50 define el subgrupo Q4, condición necesaria para generar señales de apuesta.</div>
+      <div class="feat-desc lang-en">Difference between home and away ELO. The purest "relative quality" variable in the model. elo_diff > 50 defines the Q4 subgroup — the necessary condition for generating betting signals.</div>
+      <div class="feat-coef">coef: <span style="color:var(--accent)">+0.188</span> · <span class="tag tag-green lang-es">ELO</span><span class="tag tag-green lang-en">ELO</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-name">elo_prob_home</div>
+      <div class="feat-desc lang-es">Probabilidad de victoria local según el ELO ajustado (K=12, ha=−25). Incorpora la asimetría real del fútbol mexicano sobre ventaja de localía. Feature #4 por importancia.</div>
+      <div class="feat-desc lang-en">Home win probability from adjusted ELO (K=12, ha=−25). Captures the real asymmetry of Mexican football regarding home advantage. Feature ranked #4 by importance.</div>
+      <div class="feat-coef">coef: <span style="color:var(--accent)">+0.229</span> · <span class="tag tag-green">ELO</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-name">elo_form</div>
+      <div class="feat-desc lang-es">Interacción: elo_diff × señal de forma últimos 5 partidos. Un equipo ELO superior que también lleva buena racha tiene un indicador compuesto más fuerte. Detecta momentum.</div>
+      <div class="feat-desc lang-en">Interaction: elo_diff × last-5-match form signal. A higher ELO team on a good run has a stronger composite indicator. Captures momentum.</div>
+      <div class="feat-coef">coef: — · <span class="tag tag-green">ELO + Forma</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-name">d_avg_ga_pre</div>
+      <div class="feat-desc lang-es">Diferencial de goles recibidos en promedio (local − visitante). <strong>Feature #1 por magnitud de coeficiente</strong>. La calidad defensiva diferencial es el predictor más fuerte de victoria en Liga MX.</div>
+      <div class="feat-desc lang-en">Differential in average goals conceded (home − away). <strong>Feature #1 by coefficient magnitude</strong>. Defensive quality differential is the single strongest victory predictor in Liga MX.</div>
+      <div class="feat-coef">coef: <span style="color:var(--amber)">−0.468</span> · <span class="tag tag-amber lang-es">Defensa</span><span class="tag tag-amber lang-en">Defence</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-name">d_attack_pre</div>
+      <div class="feat-desc lang-es">Índice de ataque diferencial. Derivado de goles a favor normalizados por el promedio de la liga en esa fecha. Feature #2 por importancia. La liga tiene fuerte correlación entre ataque y puntos.</div>
+      <div class="feat-desc lang-en">Differential attack index. Derived from goals scored normalised by the league average at that date. Feature #2 by importance. Liga MX shows strong correlation between attack and points.</div>
+      <div class="feat-coef">coef: <span style="color:var(--accent)">+0.404</span> · <span class="tag tag-green lang-es">Ataque</span><span class="tag tag-green lang-en">Attack</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-name">d_ppg_pre</div>
+      <div class="feat-desc lang-es">Puntos por partido diferencial (local − visitante), acumulado hasta ese partido. Normaliza la calidad por número de partidos jugados. Más robusto que puntos brutos para temporadas cortas.</div>
+      <div class="feat-desc lang-en">Differential points per game (home − away), cumulative up to that match. Normalises quality by matches played. More robust than raw points for short-season formats.</div>
+      <div class="feat-coef">coef: −0.289 · <span class="tag tag-dim">Forma</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-name">d_pts_last3_pre · d_pts_last5_pre</div>
+      <div class="feat-desc lang-es">Puntos en últimos 3 y 5 partidos. Capturan la forma reciente sin el peso de toda la temporada. Clave para detectar rachas y caídas post-lesiones o cambios de entrenador.</div>
+      <div class="feat-desc lang-en">Points from last 3 and 5 matches. Capture recent form without the drag of the full season. Key for detecting runs and slumps following injuries or managerial changes.</div>
+      <div class="feat-coef lang-es">NaN en jornada ≤3 · imputados con 0 · <span class="tag tag-dim">Forma reciente</span></div>
+      <div class="feat-coef lang-en">NaN in matchday ≤3 · imputed with 0 · <span class="tag tag-dim">Recent form</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-name">h_team_jornada · late_season</div>
+      <div class="feat-desc lang-es"<em>late_season</em> = 1 si jornada > 12. Las jornadas finales tienen dinámicas distintas: más presión, rotaciones por Liguilla. El modelo las penaliza ligeramente — reduce el peso de la localía tardía.</div>
+      <div class="feat-desc lang-en"<em>late_season</em> = 1 if matchday > 12. Final matchdays have different dynamics: more pressure, rotation for Liguilla. The model slightly penalises them — reduces late-season home advantage weight.</div>
+      <div class="feat-coef lang-es">Sesgo jornada detectado: J1 WR=36.5% vs J19+ WR=53.5% · <span class="tag tag-amber">Contexto</span></div>
+      <div class="feat-coef lang-en">Matchday bias detected: J1 WR=36.5% vs J19+ WR=53.5% · <span class="tag tag-amber">Context</span></div>
+    </div>
+  </div>
+
+  <!-- Correlation chart -->
+  <div class="chart-box fade-in" style="margin-top:1px;">
+    <div class="chart-title">
+      <span class="lang-es">Correlación de features individuales con victoria local</span>
+      <span class="lang-en">Individual feature correlation with home win</span>
+    </div>
+    <div id="corrBars"></div>
+    <div class="insight lang-es" style="margin-top:12px;">
+      <strong>Por qué las correlaciones individuales son bajas (r≈0.10).</strong> En fútbol, ninguna variable explica la victoria por sí sola — la incertidumbre es intrínseca. El modelo captura el efecto <em>combinado</em>. Con 18 variables diferenciales, el AUC de 0.680 es estadísticamente sólido para este dominio.
+    </div>
+    <div class="insight lang-en" style="margin-top:12px;">
+      <strong>Why individual correlations are low (r≈0.10).</strong> In football, no single variable explains the win on its own — uncertainty is intrinsic. The model captures the <em>combined</em> effect. With 18 differential variables, AUC 0.680 is statistically strong for this domain.
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     §3 · ANÁLISIS DE MERCADO
+═══════════════════════════════════════════════ -->
+<section id="market">
+<div class="container">
+  <div class="s-eyebrow lang-es">03 — Análisis de Mercado</div>
+  <div class="s-eyebrow lang-en">03 — Market Analysis</div>
+  <h2 class="s-title lang-es">Dónde vive<br><em>el valor real.</em></h2>
+  <h2 class="s-title lang-en">Where the<br><em>real value lives.</em></h2>
+  <p class="s-sub lang-es">El modelo general no basta. La señal real emerge solo en el cruce de tres condiciones: favorito ELO claro, divergencia con el mercado y cuota razonable. Aquí se justifica cada filtro con datos.</p>
+  <p class="s-sub lang-en">A general model is not enough. The real signal only emerges at the intersection of three conditions: clear ELO favourite, divergence from market, and reasonable odds. Every filter is justified with data here.</p>
+
+  <hr class="divider">
+
+  <!-- ROI CIEGO -->
+  <div class="grid-3 fade-in" style="gap:1px; margin-bottom:1px;">
+    <div class="card card-sm">
+      <div class="card-label lang-es">ROI apostando siempre al local</div>
+      <div class="card-label lang-en">ROI betting always on home</div>
+      <div class="card-value red">−7.20%</div>
+      <div class="card-sub lang-es">Sin filtros · 4,567 apuestas</div>
+      <div class="card-sub lang-en">No filters · 4,567 bets</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-label lang-es">ROI apostando siempre al visitante</div>
+      <div class="card-label lang-en">ROI betting always on away</div>
+      <div class="card-value red">−11.32%</div>
+      <div class="card-sub lang-es">Sin filtros · margen de casa más alto</div>
+      <div class="card-sub lang-en">No filters · highest bookmaker margin</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-label lang-es">Margen promedio de casas de apuesta</div>
+      <div class="card-label lang-en">Average bookmaker margin</div>
+      <div class="card-value amber">7.44%</div>
+      <div class="card-sub lang-es">Rango: 1.0% — 9.2%</div>
+      <div class="card-sub lang-en">Range: 1.0% — 9.2%</div>
+    </div>
+  </div>
+
+  <div class="insight fade-in" style="margin-bottom:28px;">
+    <strong class="lang-es">La casa siempre gana... sin modelo.</strong>
+    <strong class="lang-en">The house always wins... without a model.</strong>
+    <span class="lang-es"> Apostar sin selección produce ROI de −7% a −11%. El margen de 7.44% es la barrera de entrada que debemos superar con señal estadística. Nuestro modelo genera <strong>+11.84% de ROI flat</strong> en el subgrupo óptimo — un exceso de retorno de ~19pp sobre el baseline ciego.</span>
+    <span class="lang-en"> Unfiltered betting produces ROI from −7% to −11%. The 7.44% margin is the entry barrier we must overcome with statistical signal. Our model generates <strong>+11.84% flat ROI</strong> in the optimal subgroup — a ~19pp excess return over the blind baseline.</span>
+  </div>
+
+  <!-- Odds range analysis -->
+  <div class="chart-box fade-in" style="margin-bottom:1px;">
+    <div class="chart-title">
+      <span class="lang-es">ROI por rango de cuota · todos los partidos (baseline sin modelo)</span>
+      <span class="lang-en">ROI by odds range · all matches (no-model baseline)</span>
+    </div>
+    <div class="chart-wrap" style="height:250px"><canvas id="oddsROIChart"></canvas></div>
+    <div class="card-insight lang-es">Las cuotas bajas (1.0–1.5) parecen tener mejor ROI, pero el favorito a esas cuotas igualmente pierde valor. El mercado está bien calibrado en extremos. La zona 1.5–2.5 es donde el modelo encuentra mayor dispersión de oportunidades.</div>
+    <div class="card-insight lang-en">Low odds (1.0–1.5) appear to have better ROI, but the favourite at those prices still loses value. The market is well-calibrated at extremes. The 1.5–2.5 range is where the model finds the most opportunity dispersion.</div>
+  </div>
+
+  <!-- Implied vs Actual -->
+  <div class="grid-2 fade-in" style="gap:1px; margin-bottom:1px;">
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Sesgo del mercado: implícita vs real (por resultado)</span>
+        <span class="lang-en">Market bias: implied vs actual probability (by outcome)</span>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="biasChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Win rate local · por cuartil de ELO diferencial</span>
+        <span class="lang-en">Home win rate · by ELO differential quartile</span>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="eloWRChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- DIVERGENCE RATIONALE -->
+  <div class="chart-box fade-in" style="margin-bottom:28px;">
+    <div class="chart-title">
+      <span class="lang-es">Construcción del filtro de divergencia: modelo − casa de apuestas</span>
+      <span class="lang-en">Building the divergence filter: model − bookmaker</span>
+    </div>
+    <div class="grid-4" style="gap:1px;">
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label lang-es">Media div. global</div>
+        <div class="card-label lang-en">Global avg div.</div>
+        <div class="card-value red">−2.7%</div>
+        <div class="card-sub lang-es">El modelo subestima en promedio</div>
+        <div class="card-sub lang-en">Model underestimates on average</div>
+      </div>
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label lang-es">Umbral mínimo</div>
+        <div class="card-label lang-en">Minimum threshold</div>
+        <div class="card-value accent">+2%</div>
+        <div class="card-sub lang-es">Grid search óptimo</div>
+        <div class="card-sub lang-en">Grid search optimal</div>
+      </div>
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label lang-es">ROI con div>2% + Q4</div>
+        <div class="card-label lang-en">ROI with div>2% + Q4</div>
+        <div class="card-value accent">+11.84%</div>
+        <div class="card-sub lang-es">n=50 apuestas</div>
+        <div class="card-sub lang-en">n=50 bets</div>
+      </div>
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label lang-es">WR en subgrupo</div>
+        <div class="card-label lang-en">Win rate in subgroup</div>
+        <div class="card-value accent">62.0%</div>
+        <div class="card-sub lang-es">vs 54.7% implícito (+7.3pp)</div>
+        <div class="card-sub lang-en">vs 54.7% implied (+7.3pp)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jornada analysis -->
+  <div class="grid-2 fade-in" style="gap:1px;">
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Win rate local · por grupo de jornada</span>
+        <span class="lang-en">Home win rate · by matchday group</span>
+      </div>
+      <div class="chart-wrap" style="height:240px"><canvas id="jornChart"></canvas></div>
+      <div class="card-insight lang-es">Jornada 1 tiene WR=36.5% — el ELO aún no tiene señal suficiente. El peak llega en jornadas 19+. La variable <em>late_season</em> captura este sesgo.</div>
+      <div class="card-insight lang-en">Matchday 1 has WR=36.5% — ELO lacks sufficient signal yet. Peak arrives at matchdays 19+. The <em>late_season</em> variable captures this bias.</div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">ROI por temporada de test · subgrupo óptimo</span>
+        <span class="lang-en">ROI by test season · optimal subgroup</span>
+      </div>
+      <div class="chart-wrap" style="height:240px"><canvas id="seasonROIChart"></canvas></div>
+      <div class="card-insight lang-es">2022/23 es la única temporada negativa (−3.7%). Las tres siguientes son positivas. La temporada actual 2025/26 ya lleva +10.3% con 12 apuestas.</div>
+      <div class="card-insight lang-en">2022/23 is the only negative season (−3.7%). The following three are positive. Current 2025/26 season is already +10.3% with 12 bets.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     §4 · DESARROLLO DEL MODELO
+═══════════════════════════════════════════════ -->
+<section id="model">
+<div class="container">
+  <div class="s-eyebrow lang-es">04 — Desarrollo del Modelo</div>
+  <div class="s-eyebrow lang-en">04 — Model Development</div>
+  <h2 class="s-title lang-es">El modelo final.<br><em>Listo para apostar.</em></h2>
+  <h2 class="s-title lang-en">The final model.<br><em>Ready to bet.</em></h2>
+  <p class="s-sub lang-es">LR + calibración isotónica + corrección Platt OOF. Tres fases de desarrollo, filtros optimizados por grid search, validados en test completamente separado.</p>
+  <p class="s-sub lang-en">LR + isotonic calibration + Platt OOF correction. Three development phases, grid-search optimised filters, validated on fully held-out test set.</p>
+
+  <hr class="divider">
+
+  <!-- Validation targets -->
+  <div style="margin-bottom:4px;" class="fade-in">
+    <div class="val-row">
+      <div class="val-cell">
+        <div class="val-metric">AUC</div>
+        <div class="val-value val-pass">0.680</div>
+        <div class="val-target lang-es">Target &gt; 0.65 ✓</div>
+        <div class="val-target lang-en">Target &gt; 0.65 ✓</div>
+      </div>
+      <div class="val-cell">
+        <div class="val-metric">ECE</div>
+        <div class="val-value val-pass">3.1%</div>
+        <div class="val-target lang-es">Target &lt; 5% ✓</div>
+        <div class="val-target lang-en">Target &lt; 5% ✓</div>
+      </div>
+      <div class="val-cell">
+        <div class="val-metric">Brier Score</div>
+        <div class="val-value val-pass">0.226</div>
+        <div class="val-target lang-es">Target &lt; 0.24 ✓</div>
+        <div class="val-target lang-en">Target &lt; 0.24 ✓</div>
+      </div>
+      <div class="val-cell">
+        <div class="val-metric">Log-Loss</div>
+        <div class="val-value val-pass">0.643</div>
+        <div class="val-target lang-es">Target &lt; 0.67 ✓</div>
+        <div class="val-target lang-en">Target &lt; 0.67 ✓</div>
+      </div>
+      <div class="val-cell">
+        <div class="val-metric lang-es">Calibración (ECE origen)</div>
+        <div class="val-metric lang-en">Calibration (base ECE)</div>
+        <div class="val-value val-pass">3.7% → 3.1%</div>
+        <div class="val-target lang-es">Platt OOF aplicado ✓</div>
+        <div class="val-target lang-en">Platt OOF applied ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why metrics matter -->
+  <div class="insight fade-in" style="margin-bottom:28px;">
+    <strong class="lang-es">Por qué estos targets importan para apuestas.</strong>
+    <strong class="lang-en">Why these targets matter for betting.</strong>
+    <span class="lang-es"> <strong>AUC &gt; 0.65</strong>: capacidad de discriminar ganadores de perdedores mejor que azar (0.5). <strong>ECE &lt; 5%</strong>: las probabilidades que emite el modelo son reales — si dice 62%, realmente gana ~62% de las veces. Sin calibración, el Kelly stack sería incorrecto y se apostaria demasiado/poco. <strong>Brier &lt; 0.24</strong>: error cuadrático promedio de la probabilidad. El libro de apuestas tiene Brier ≈ 0.228 — nuestro modelo está al mismo nivel en precisión probabilística, pero detecta mejor el valor.</span>
+    <span class="lang-en"> <strong>AUC &gt; 0.65</strong>: ability to discriminate winners from losers better than chance (0.5). <strong>ECE &lt; 5%</strong>: the model's probabilities are real — if it says 62%, it actually wins ~62% of the time. Without calibration, Kelly stakes would be wrong and overbetting/underbetting would occur. <strong>Brier &lt; 0.24</strong>: average squared error of the probability. The bookmaker has Brier ≈ 0.228 — our model is at the same probabilistic precision level, but better at detecting value.</span>
+  </div>
+
+  <!-- Model architecture -->
+  <div class="chart-box fade-in" style="margin-bottom:1px;">
+    <div class="chart-title">
+      <span class="lang-es">Arquitectura del modelo · 3 capas</span>
+      <span class="lang-en">Model architecture · 3 layers</span>
+    </div>
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-num lang-es">CAPA 1 — BASE</div>
+        <div class="pipe-num lang-en">LAYER 1 — BASE</div>
+        <div class="pipe-name">Logistic Regression</div>
+        <div class="pipe-desc lang-es">C=1.0 · 18 features normalizadas con StandardScaler · 3,297 partidos de entrenamiento (2012–2022)</div>
+        <div class="pipe-desc lang-en">C=1.0 · 18 features normalised with StandardScaler · 3,297 training matches (2012–2022)</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num lang-es">CAPA 2 — CALIBRACIÓN</div>
+        <div class="pipe-num lang-en">LAYER 2 — CALIBRATION</div>
+        <div class="pipe-name">Isotonic (5-fold CV)</div>
+        <div class="pipe-desc lang-es">Calibración no paramétrica sobre las probabilidades base. Corrige la forma de la curva de calibración sistemáticamente.</div>
+        <div class="pipe-desc lang-en">Non-parametric calibration on base probabilities. Systematically corrects the shape of the calibration curve.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num lang-es">CAPA 3 — PLATT OOF</div>
+        <div class="pipe-num lang-en">LAYER 3 — PLATT OOF</div>
+        <div class="pipe-name">Platt Scaling OOF</div>
+        <div class="pipe-desc lang-es">Regresión logística sobre predicciones out-of-fold. Corrige sobreestimación residual en p > 0.70. ECE: 3.7% → 3.1%.</div>
+        <div class="pipe-desc lang-en">Logistic regression on out-of-fold predictions. Corrects residual overestimation at p > 0.70. ECE: 3.7% → 3.1%.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="grid-2 fade-in" style="gap:1px; margin-bottom:1px;">
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Bankroll simulado · Kelly/4 · subgrupo Q4</span>
+        <span class="lang-en">Simulated bankroll · Kelly/4 · Q4 subgroup</span>
+      </div>
+      <div class="chart-wrap" style="height:270px"><canvas id="bankrollChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">
+        <span class="lang-es">Calibración final · modelo vs ideal</span>
+        <span class="lang-en">Final calibration · model vs ideal</span>
+      </div>
+      <div class="chart-wrap" style="height:270px"><canvas id="calibChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Feature importance -->
+  <div class="chart-box fade-in" style="margin-bottom:1px;">
+    <div class="chart-title">
+      <span class="lang-es">Importancia de características · coeficientes LR (magnitud)</span>
+      <span class="lang-en">Feature importance · LR coefficients (magnitude)</span>
+    </div>
+    <div id="featImpBars"></div>
+  </div>
+
+  <!-- Filters optimized -->
+  <div class="chart-box fade-in" style="margin-bottom:1px; margin-top:1px;">
+    <div class="chart-title">
+      <span class="lang-es">Filtros de apuesta · optimizados por grid search · test 2022–2026</span>
+      <span class="lang-en">Betting filters · grid-search optimised · test 2022–2026</span>
+    </div>
+    <div class="filter-row">
+      <div class="filter-cell">
+        <div class="filter-k">ELO Q4</div>
+        <div class="filter-v">elo_diff &gt; ~50</div>
+        <div class="filter-why lang-es">Local en percentil 75+ de ventaja ELO. Condición necesaria: sin este filtro el ROI cae a −7%. Es el único subgrupo con WR &gt; 60%.</div>
+        <div class="filter-why lang-en">Home in 75th+ percentile of ELO advantage. Necessary condition: without this filter ROI drops to −7%. Only subgroup with WR &gt; 60%.</div>
+      </div>
+      <div class="filter-cell">
+        <div class="filter-k lang-es">Expected Value</div>
+        <div class="filter-k lang-en">Expected Value</div>
+        <div class="filter-v">&gt; 3%</div>
+        <div class="filter-why lang-es">EV = p_modelo × cuota − 1. El umbral mínimo que supera el margen de casa del 7.4% en promedio cuando se combina con los demás filtros.</div>
+        <div class="filter-why lang-en">EV = p_model × odds − 1. Minimum threshold that beats the 7.4% house margin on average when combined with other filters.</div>
+      </div>
+      <div class="filter-cell">
+        <div class="filter-k lang-es">Divergencia</div>
+        <div class="filter-k lang-en">Divergence</div>
+        <div class="filter-v">&gt; +2%</div>
+        <div class="filter-why lang-es">p_modelo − p_implícita &gt; 2%. Selecciona partidos donde el modelo ve más valor que el mercado. Sin esto, el modelo está "de acuerdo" con la casa.</div>
+        <div class="filter-why lang-en">p_model − p_implied &gt; 2%. Selects matches where our model sees more value than the market. Without this, the model "agrees" with the bookmaker.</div>
+      </div>
+      <div class="filter-cell">
+        <div class="filter-k lang-es">Rango de cuota</div>
+        <div class="filter-k lang-en">Odds range</div>
+        <div class="filter-v">1.50 — 4.50</div>
+        <div class="filter-why lang-es">Cuotas &lt;1.5: poco valor. Cuotas &gt;4.5: el equipo local no cumple condición Q4 normalmente. El rango 1.5–2.5 tiene mayor densidad de señales.</div>
+        <div class="filter-why lang-en">Odds &lt;1.5: little value. Odds &gt;4.5: home team typically doesn't meet Q4 condition. Range 1.5–2.5 has highest signal density.</div>
+      </div>
+      <div class="filter-cell">
+        <div class="filter-k lang-es">Prob. modelo</div>
+        <div class="filter-k lang-en">Model prob.</div>
+        <div class="filter-v">&gt; 30%</div>
+        <div class="filter-why lang-es">Evita apostar cuando el modelo está muy incierto. En Q4 + div&gt;2% este umbral rara vez es activo — solo elimina outliers.</div>
+        <div class="filter-why lang-en">Avoids betting when the model is highly uncertain. In Q4 + div&gt;2% this threshold is rarely active — only removes outliers.</div>
+      </div>
+      <div class="filter-cell">
+        <div class="filter-k">Kelly Stake</div>
+        <div class="filter-v">Kelly/4</div>
+        <div class="filter-why lang-es">Kelly fraccional. El Kelly completo maximiza crecimiento pero puede apostar 20–30% del bankroll en una sola apuesta. /4 reduce el riesgo de ruina a niveles manejables.</div>
+        <div class="filter-why lang-en">Fractional Kelly. Full Kelly maximises growth but may stake 20–30% of bankroll on a single bet. /4 reduces ruin risk to manageable levels.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistical significance -->
+  <div class="chart-box fade-in" style="margin-bottom:1px; margin-top:1px;">
+    <div class="chart-title">
+      <span class="lang-es">Significancia estadística · IC Bootstrap 95%</span>
+      <span class="lang-en">Statistical significance · 95% Bootstrap CI</span>
+    </div>
+    <div class="grid-3" style="gap:1px;">
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label">Z-Score</div>
+        <div class="card-value amber">1.04</div>
+        <div class="card-sub lang-es">p-valor: 0.15 · n=50 insuficiente</div>
+        <div class="card-sub lang-en">p-value: 0.15 · n=50 insufficient</div>
+      </div>
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label lang-es">IC 95% ROI (Bootstrap)</div>
+        <div class="card-label lang-en">95% CI ROI (Bootstrap)</div>
+        <div class="card-value" style="font-size:18px; color:var(--amber)">[−7.2%, +44.8%]</div>
+        <div class="card-sub lang-es">Incluye 0 — requiere más volumen</div>
+        <div class="card-sub lang-en">Includes 0 — more volume required</div>
+      </div>
+      <div class="card card-sm" style="border:none; background:var(--bg2);">
+        <div class="card-label lang-es">Apuestas para signif. 5%</div>
+        <div class="card-label lang-en">Bets for 5% significance</div>
+        <div class="card-value">~150</div>
+        <div class="card-sub lang-es">~3 temporadas completas</div>
+        <div class="card-sub lang-en">~3 full seasons</div>
+      </div>
+    </div>
+    <div style="padding:16px; margin-top:1px; background:var(--bg2);">
+      <div class="lang-es" style="font-size:11px; color:var(--text3); margin-bottom:6px; font-family:var(--mono);">IC 95% del ROI · Bootstrap 10,000 iter. · n=50</div>
+      <div class="lang-en" style="font-size:11px; color:var(--text3); margin-bottom:6px; font-family:var(--mono);">95% CI for ROI · Bootstrap 10,000 iter. · n=50</div>
+      <div class="ci-visual">
+        <div class="ci-range" style="left:22%;width:50%;"></div>
+        <div class="ci-zero"  style="left:37%;"></div>
+        <div class="ci-point" style="left:55%;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--text3);">
+        <span>−20%</span>
+        <span style="color:var(--red)">0% ←</span>
+        <span style="color:var(--accent)">→ +11.8%</span>
+        <span>+50%</span>
+      </div>
+    </div>
+    <div class="insight lang-es" style="margin-top:1px;">
+      <strong>Interpretación honesta.</strong> El edge es real y observable (WR 62% vs implied 54.7%), pero con n=50 apuestas no alcanza significancia estadística formal al 5%. Esto <em>no</em> significa que el modelo no funciona — significa que se necesita acumular más historial antes de escalar capital. La recomendación es operar con stakes mínimos (2–3% del bankroll) hasta cruzar las 150 apuestas y re-evaluar.
+    </div>
+    <div class="insight lang-en" style="margin-top:1px;">
+      <strong>Honest interpretation.</strong> The edge is real and observable (WR 62% vs implied 54.7%), but with n=50 bets it does not reach formal 5% statistical significance. This does <em>not</em> mean the model doesn't work — it means more history must accumulate before scaling capital. Recommendation: operate with minimum stakes (2–3% of bankroll) until crossing 150 bets and re-evaluate.
+    </div>
+  </div>
+
+  <!-- Model spec card -->
+  <div class="chart-box fade-in" style="margin-top:1px;">
+    <div class="chart-title">
+      <span class="lang-es">Ficha técnica · modelo de producción v1.0</span>
+      <span class="lang-en">Technical spec · production model v1.0</span>
+    </div>
+    <div class="grid-2" style="gap:1px;">
+      <div>
+        <table class="data-table">
+          <thead><tr>
+            <th class="lang-es">Componente</th><th class="lang-es">Valor</th>
+            <th class="lang-en">Component</th><th class="lang-en">Value</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="lang-es">Algoritmo</td><td class="lang-en">Algorithm</td><td>LR + Isotonic + Platt OOF</td></tr>
+            <tr><td class="lang-es">Features</td><td class="lang-en">Features</td><td>18 (diferenciales + ELO)</td></tr>
+            <tr><td class="lang-es">Train / Test</td><td class="lang-en">Train / Test</td><td>2012–2022 / 2022–2026</td></tr>
+            <tr><td class="lang-es">ELO params</td><td class="lang-en">ELO params</td><td>K=12, ha=−25, gd=0.3</td></tr>
+            <tr><td class="lang-es">Regularización</td><td class="lang-en">Regularisation</td><td>C = 1.0 (L2)</td></tr>
+            <tr><td class="lang-es">Calibración</td><td class="lang-en">Calibration</td><td>Isotonic 5-fold + Platt OOF</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <table class="data-table">
+          <thead><tr>
+            <th class="lang-es">KPI apuestas</th><th class="lang-es">Valor</th>
+            <th class="lang-en">Betting KPI</th><th class="lang-en">Value</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Win Rate</td><td style="color:var(--accent)">62.0%</td></tr>
+            <tr><td class="lang-es">Implied WR</td><td class="lang-en">Implied WR</td><td style="color:var(--text3)">54.7% (−7.3pp edge)</td></tr>
+            <tr><td>ROI Flat</td><td style="color:var(--accent)">+11.84%</td></tr>
+            <tr><td>ROI Kelly/4</td><td style="color:var(--accent)">+16.9%</td></tr>
+            <tr><td class="lang-es">Max Drawdown</td><td class="lang-en">Max Drawdown</td><td style="color:var(--amber)">−19.0% (7 bets)</td></tr>
+            <tr><td class="lang-es">Señales/temporada</td><td class="lang-en">Signals/season</td><td>~12–15</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer style="border-top:1px solid var(--border); padding:32px; text-align:center;">
+  <div style="font-family:var(--mono); font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:var(--text3);">
+    Liga MX Betting Analytics · 2025/26
+    <span style="color:var(--border2); margin:0 12px;">|</span>
+    <span class="lang-es">Pipeline estadístico · Fases A + B + C</span>
+    <span class="lang-en">Statistical pipeline · Phases A + B + C</span>
+    <span style="color:var(--border2); margin:0 12px;">|</span>
+    ELO K=12 · LR + Isotonic + Platt OOF · Kelly/4
+  </div>
+</footer>
+
+
+<script>
+// ══ DATA ══════════════════════════════════════════════════════════════════
+const seasons = ['12/13','13/14','14/15','15/16','16/17','17/18','18/19','19/20','20/21','21/22','22/23','23/24','24/25','25/26'];
+const avgGoals = [2.47,2.58,2.46,2.89,2.62,2.56,2.68,2.92,2.46,2.40,2.81,2.84,2.74,2.95];
+const hwrBySeason = [0.428,0.419,0.443,0.446,0.446,0.422,0.479,0.444,0.482,0.401,0.430,0.453,0.488,0.480];
+const bkHistory = [1000,957.4,1008.4,982.6,966,930,943.1,968,980.3,957.2,974,956.7,976.4,987.2,1044.9,993.5,943.9,972.6,1007.7,1038.4,1061.5,1097.8,1152.7,1135,1168.5,1195.7,1143,1175.4,1212.3,1256.6,1295.5,1335,1374.3,1305.6,1240.3,1178.3,1119.4,1156,1172.3,1113.7,1152.6,1194.7,1235.9,1174.1,1198.4,1251.9,1283.8,1231.4,1169.9,1230.7,1169.2];
+
+const C = {
+  accent: '#B8FF57', red: '#FF4D4D', amber: '#F5A623',
+  blue: '#4D9FFF', dim: '#2a2a2a', grid: 'rgba(255,255,255,0.06)',
+  text: '#b8b4ae', text2: '#7a7672'
+};
+
+Chart.defaults.color = C.text;
+Chart.defaults.borderColor = C.grid;
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 11;
+
+function chartOpts(extra={}) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: {
+      backgroundColor: '#1a1a1a', borderColor: 'rgba(255,255,255,0.1)',
+      borderWidth: 1, titleColor: '#B8FF57', bodyColor: '#8a8780',
+      titleFont: { family: "'IBM Plex Mono', monospace", size: 11 },
+      bodyFont: { family: "'IBM Plex Mono', monospace", size: 11 }
+    }},
+    scales: {
+      x: { grid: { color: C.grid }, ticks: { color: C.text, font: { size: 11 } } },
+      y: { grid: { color: C.grid }, ticks: { color: C.text, font: { size: 11 } } }
+    },
+    ...extra
+  };
+}
+
+// ── Goals by season
+new Chart(document.getElementById('goalsChart'), {
+  type: 'bar',
+  data: {
+    labels: seasons,
+    datasets: [
+      { data: avgGoals, backgroundColor: avgGoals.map(v => v >= 2.8 ? C.accent : 'rgba(184,255,87,0.25)'),
+        borderWidth: 0 },
+      { data: avgGoals.map(_=>2.661), type: 'line', borderColor: 'rgba(255,255,255,0.25)',
+        borderDash:[4,4], borderWidth:1, pointRadius:0, fill:false }
+    ]
+  },
+  options: { ...chartOpts(), scales: {
+    x: { grid: {color:C.grid}, ticks:{color:C.text,font:{size:11}} },
+    y: { grid:{color:C.grid}, ticks:{color:C.text,font:{size:11}}, min:2.0, max:3.2,
+         title:{display:true, text:'goals/match', color:C.text2} }
+  }}
+});
+
+// ── Goals distribution
+new Chart(document.getElementById('goalsDistChart'), {
+  type: 'bar',
+  data: {
+    labels: ['0','1','2','3','4','5','6','7','8','9+'],
+    datasets: [{
+      data: [7.5,18.0,24.2,22.4,14.5,8.6,3.0,1.2,0.5,0.1],
+      backgroundColor: ['rgba(255,255,255,0.1)','rgba(184,255,87,0.2)','rgba(184,255,87,0.5)','rgba(184,255,87,0.45)','rgba(184,255,87,0.25)','rgba(245,166,35,0.35)','rgba(255,77,77,0.3)','rgba(255,77,77,0.2)','rgba(255,77,77,0.15)','rgba(255,77,77,0.1)'],
+      borderWidth: 0
+    }]
+  },
+  options: { ...chartOpts(), scales: {
+    x: { grid:{display:false}, ticks:{color:C.text,font:{size:11}} },
+    y: { grid:{color:C.grid}, ticks:{color:C.text2, callback: v=>v+'%'},
+         title:{display:true, text:'freq %', color:C.text2} }
+  }}
+});
+
+// ── HWR trend
+new Chart(document.getElementById('hwrChart'), {
+  type: 'line',
+  data: {
+    labels: seasons,
+    datasets: [{
+      data: hwrBySeason.map(v=>+(v*100).toFixed(1)),
+      borderColor: C.accent, borderWidth: 1.5,
+      backgroundColor: 'rgba(184,255,87,0.05)',
+      fill: true, tension: 0.3, pointRadius: 3,
+      pointBackgroundColor: hwrBySeason.map(v => v>=0.47 ? C.accent : C.dim)
+    },{
+      data: hwrBySeason.map(_=>44.7), type:'line',
+      borderColor:'rgba(255,255,255,0.2)', borderDash:[4,4],
+      borderWidth:1, pointRadius:0, fill:false
+    }]
+  },
+  options: { ...chartOpts(), scales: {
+    x: { grid:{display:false}, ticks:{color:C.text,font:{size:11}} },
+    y: { grid:{color:C.grid}, ticks:{color:C.text2, callback:v=>v+'%'}, min:36, max:52 }
+  }}
+});
+
+// ── League comparison
+new Chart(document.getElementById('leaguesChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Bundesliga','MLS','Serie A','Premier','Liga MX','La Liga','Ligue 1'],
+    datasets: [{
+      data: [3.03,3.15,2.75,2.85,2.661,2.62,2.52],
+      backgroundColor: ['rgba(255,255,255,0.12)','rgba(255,255,255,0.12)','rgba(255,255,255,0.12)','rgba(255,255,255,0.12)',C.accent,'rgba(255,255,255,0.12)','rgba(255,255,255,0.12)'],
+      borderWidth: 0
+    }]
+  },
+  options: { ...chartOpts({
+    indexAxis: 'y',
+    scales: {
+      y: { grid:{display:false}, ticks:{color:C.text,font:{size:11}} },
+      x: { grid:{color:C.grid}, ticks:{color:C.text,font:{size:11}}, min:2.0 }
+    }
+  })}
+});
+
+// ── Home goals distribution
+new Chart(document.getElementById('homeGoalsDist'), {
+  type: 'bar',
+  data: {
+    labels: ['0','1','2','3','4','5','6+'],
+    datasets: [{
+      data: [21.6,34.3,24.9,12.8,4.7,1.4,0.3],
+      backgroundColor: 'rgba(184,255,87,0.3)',
+      borderColor: 'rgba(184,255,87,0.6)',
+      borderWidth: 1
+    }]
+  },
+  options: { ...chartOpts(), scales: {
+    x:{grid:{display:false},ticks:{color:C.text,font:{size:11}}},
+    y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},callback:v=>v+'%'}}
+  }}
+});
+
+// ── Bias chart
+new Chart(document.getElementById('biasChart'), {
+  type: 'bar',
+  data: {
+    labels: [
+      document.documentElement.lang==='en'?'Home Win':'Victoria Local',
+      'Empate / Draw',
+      document.documentElement.lang==='en'?'Away Win':'Victoria Visit.'
+    ],
+    datasets: [
+      { label:'Implied', data:[47.4,29.0,31.0], backgroundColor:'rgba(255,255,255,0.15)', borderWidth:0 },
+      { label:'Actual', data:[44.7,27.1,28.2], backgroundColor:[C.accent,'rgba(184,255,87,0.4)','rgba(184,255,87,0.2)'], borderWidth:0 }
+    ]
+  },
+  options: { ...chartOpts({ plugins: { legend: { display: true, labels: { color: C.text, boxWidth:10, font:{size:10} }}} }),
+    scales:{
+      x:{grid:{display:false},ticks:{color:C.text,font:{size:11}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},callback:v=>v+'%'},min:20,max:55}
+    }
+  }
+});
+
+// ── ELO WR by quartile
+new Chart(document.getElementById('eloWRChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Q1 (away fav)','Q2','Q3','Q4 (home fav)'],
+    datasets: [{
+      data: [34.0,40.1,45.5,55.5],
+      backgroundColor:['rgba(255,77,77,0.5)','rgba(255,77,77,0.25)','rgba(184,255,87,0.25)',C.accent],
+      borderWidth:0
+    },{
+      data:[34.0,40.1,45.5,55.5].map(_=>44.7),
+      type:'line', borderColor:'rgba(255,255,255,0.2)',
+      borderDash:[4,4],borderWidth:1,pointRadius:0,fill:false
+    }]
+  },
+  options:{...chartOpts(),scales:{
+    x:{grid:{display:false},ticks:{color:C.text,font:{size:11}}},
+    y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},callback:v=>v+'%'},min:25,max:65}
+  }}
+});
+
+// ── Odds ROI chart
+new Chart(document.getElementById('oddsROIChart'), {
+  type: 'bar',
+  data: {
+    labels:['1.0–1.5','1.5–2.0','2.0–2.5','2.5–3.0','3.0–4.0','4.0+'],
+    datasets: [{
+      data: [-4.5,-3.1,-3.7,-12.0,-18.6,-23.9],
+      backgroundColor:d=>d.parsed.y>-5?'rgba(255,77,77,0.3)':'rgba(255,77,77,0.6)',
+      borderWidth:0
+    }]
+  },
+  options:{...chartOpts({plugins:{legend:{display:false}}}),
+    scales:{
+      x:{grid:{display:false},ticks:{color:C.text,font:{size:11}}},
+      y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},callback:v=>v+'%'},max:5}
+    }
+  }
+});
+
+// ── Jornada WR chart
+new Chart(document.getElementById('jornChart'), {
+  type: 'bar',
+  data: {
+    labels:['J1–6','J7–12','J13–18','J19+'],
+    datasets:[{
+      data:[43.1,43.6,44.4,45.7],
+      backgroundColor:['rgba(255,77,77,0.5)','rgba(184,255,87,0.25)','rgba(184,255,87,0.35)',C.accent],
+      borderWidth:0
+    }]
+  },
+  options:{...chartOpts(),scales:{
+    x:{grid:{display:false},ticks:{color:C.text,font:{size:11}}},
+    y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},callback:v=>v+'%'},min:38,max:50}
+  }}
+});
+
+// ── Season ROI chart
+new Chart(document.getElementById('seasonROIChart'), {
+  type: 'bar',
+  data: {
+    labels:['22/23','23/24','24/25','25/26'],
+    datasets:[{
+      data:[-3.75,31.50,1.00,10.25],
+      backgroundColor:v=>v.parsed.y>=0?C.accent:C.red,
+      borderWidth:0
+    }]
+  },
+  options:{...chartOpts(),scales:{
+    x:{grid:{display:false},ticks:{color:C.text,font:{size:11}}},
+    y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},callback:v=>v+'%'}}
+  }}
+});
+
+// ── Bankroll chart
+new Chart(document.getElementById('bankrollChart'), {
+  type: 'line',
+  data: {
+    labels: bkHistory.map((_,i)=>i),
+    datasets:[{
+      data: bkHistory,
+      borderColor: C.accent, borderWidth:1.5,
+      backgroundColor:'rgba(184,255,87,0.06)', fill:true,
+      tension:0.3, pointRadius:0
+    },{
+      data: bkHistory.map(_=>1000),
+      borderColor:'rgba(255,255,255,0.15)', borderDash:[4,4],
+      borderWidth:1, pointRadius:0, fill:false
+    }]
+  },
+  options:{...chartOpts(),scales:{
+    x:{grid:{display:false},ticks:{color:C.text2,maxTicksLimit:6},title:{display:true,text:'bet #',color:C.text,font:{size:11}}},
+    y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11},callback:v=>'€'+v},min:850,max:1450}
+  }}
+});
+
+// ── Calibration chart
+new Chart(document.getElementById('calibChart'), {
+  type:'line',
+  data:{
+    labels:['0.22','0.32','0.44','0.53','0.70','0.77'],
+    datasets:[
+      {data:[0.22,0.32,0.44,0.53,0.70,0.77],borderColor:'rgba(255,255,255,0.15)',
+       borderDash:[4,4],pointRadius:0,fill:false,borderWidth:1},
+      {data:[0.176,0.304,0.436,0.603,0.725,0.800],borderColor:C.accent,
+       borderWidth:2,pointRadius:4,fill:false,tension:0.2,
+       pointBackgroundColor:C.accent}
+    ]
+  },
+  options:{...chartOpts(),scales:{
+    x:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11}},title:{display:true,text:'pred. prob.',color:C.text,font:{size:11}}},
+    y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11}},min:0.1,max:0.9,
+       title:{display:true,text:'actual rate',color:C.text,font:{size:11}}}
+  }}
+});
+
+// ── Sparkbars
+function sparkBars(containerId, data, maxVal, colorFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = data.map(({label,val,valStr})=>{
+    const pct = (Math.abs(val)/maxVal*100).toFixed(1);
+    const col = colorFn(val);
+    return `<div class="sparkbar-row">
+      <span class="sparkbar-label">${label}</span>
+      <div class="sparkbar-track"><div class="sparkbar-fill" style="width:${pct}%;background:${col}"></div></div>
+      <span class="sparkbar-val">${valStr}</span>
+    </div>`;
+  }).join('');
+}
+
+// Team wins
+sparkBars('teamBars', [
+  {label:'Club América',val:287,valStr:'287'},{label:'Tigres UANL',val:253,valStr:'253'},
+  {label:'Monterrey',val:242,valStr:'242'},{label:'Cruz Azul',val:231,valStr:'231'},
+  {label:'Toluca',val:227,valStr:'227'},{label:'Club León',val:217,valStr:'217'},
+  {label:'Pachuca',val:206,valStr:'206'},{label:'Santos',val:182,valStr:'182'},
+  {label:'Chivas',val:176,valStr:'176'},{label:'UNAM Pumas',val:175,valStr:'175'}
+], 287, v => `rgba(184,255,87,${0.2+v/287*0.6})`);
+
+// ELO ranking
+const eloData = [
+  ['Toluca',1705.6],['Cruz Azul',1693.6],['Club América',1650.8],['Tigres UANL',1635.4],
+  ['Monterrey',1621.2],['Chivas',1589.6],['Pachuca',1563.6],['UNAM Pumas',1536.0],
+  ['Club Tijuana',1513.3],['Club León',1482.1],['Atlas',1476.0],['Necaxa',1474.8],
+  ['Juárez',1470.0],['Atl. San Luis',1466.1],['Querétaro',1438.7],
+  ['Mazatlán FC',1404.9],['Puebla',1391.1],['Santos',1377.9],['Veracruz',1312.8]
+];
+sparkBars('eloRanking',  eloData.map(([label,val])=>({
+  label, val: val-1300,
+  valStr: val.toFixed(0)
+})), 1705.6-1300, v => {
+  const r = v/(1705.6-1300);
+  return r>0.7 ? C.accent : r>0.4 ? C.amber : 'rgba(255,255,255,0.25)';
+});
+
+// Feature importance bars
+const featImp = [
+  {f:'d_avg_ga_pre',c:-0.468},{f:'d_attack_pre',c:0.404},{f:'d_ppg_pre',c:-0.289},
+  {f:'d_avg_gf_pre',c:-0.255},{f:'a_ppg_pre',c:0.240},{f:'d_defense_pre',c:0.237},
+  {f:'elo_prob_home',c:0.229},{f:'elo_diff',c:0.188},{f:'d_win_rate_pre',c:0.179},
+  {f:'d_spi_pre',c:0.123},{f:'d_pts_last5',c:0.095},{f:'h_ppg_pre',c:-0.121}
+].sort((a,b)=>Math.abs(b.c)-Math.abs(a.c));
+const maxC = Math.max(...featImp.map(d=>Math.abs(d.c)));
+const fi = document.getElementById('featImpBars');
+if(fi) {
+  fi.innerHTML = featImp.map(({f,c})=>{
+    const pct=(Math.abs(c)/maxC*100).toFixed(1);
+    const col = c>0?C.accent:C.amber;
+    const sign = c>0?'+':'-';
+    return `<div class="sparkbar-row">
+      <span class="sparkbar-label" style="width:150px;color:${col}">${f}</span>
+      <div class="sparkbar-track"><div class="sparkbar-fill" style="width:${pct}%;background:${col}"></div></div>
+      <span class="sparkbar-val">${sign}${Math.abs(c).toFixed(3)}</span>
+    </div>`;
+  }).join('');
+}
+
+// Feature correlations
+const corrData = [
+  {f:'spi_pre',r:0.1228},{f:'elo_pre',r:0.1129},{f:'ppg_pre',r:0.1035},
+  {f:'attack_pre',r:0.1008},{f:'avg_gf_pre',r:0.0986},{f:'win_rate_pre',r:0.0919},
+  {f:'pts_last5',r:0.0753},{f:'defense_pre',r:-0.0715},{f:'avg_ga_pre',r:-0.0701},
+  {f:'pts_last3',r:0.0624}
+];
+const maxR = 0.1228;
+const cb = document.getElementById('corrBars');
+if(cb) {
+  cb.innerHTML = corrData.map(({f,r})=>{
+    const pct=(Math.abs(r)/maxR*100).toFixed(1);
+    const col = r>0 ? C.accent : C.amber;
+    return `<div class="sparkbar-row">
+      <span class="sparkbar-label" style="width:150px">${f}</span>
+      <div class="sparkbar-track"><div class="sparkbar-fill" style="width:${pct}%;background:${col}"></div></div>
+      <span class="sparkbar-val">${r>0?'+':''}${r.toFixed(4)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── NAVIGATION ──────────────────────────────────────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a[data-section]');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.toggle('active', a.dataset.section === e.target.id));
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+// ── FADE IN ─────────────────────────────────────────────────────────────────
+const fadeObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); fadeObs.unobserve(e.target); }});
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => fadeObs.observe(el));
+
+// ── LANG ─────────────────────────────────────────────────────────────────────
+let isEN = false;
+function toggleLang() {
+  isEN = !isEN;
+  document.body.classList.toggle('en', isEN);
+  document.querySelector('.lang-btn').textContent = isEN ? 'ES / EN' : 'EN / ES';
+}
+</script>
+</body>
+</html>
